@@ -50,7 +50,7 @@ def generator_3d_trajectory(step_num: int, step_len: float = 0.55,
     traj[0] = x_initial, y_initial, z_initial
 
     # 行走模式
-    def walk_mode(mode: int) -> np.ndarray:
+    def walk_mode(mode: int):
         """
         两种不同的模式进行随机漫步。
         Args:
@@ -68,7 +68,7 @@ def generator_3d_trajectory(step_num: int, step_len: float = 0.55,
             elif walk_direction <= y_direct_prob:
                 y_incr = np.random.normal(step_len, 0.1) * random.choice([-1, 1])
             elif walk_direction <= z_direct_prob:
-                z_incr = np.random.normal(step_len, 0.1) * random.choice([-1, 1])
+                z_incr = np.random.normal(step_len / 2, 0.1) * random.choice([-1, 1])
         elif mode == 1:
             pass
 
@@ -83,10 +83,7 @@ def generator_3d_trajectory(step_num: int, step_len: float = 0.55,
             x_tmp_loc, y_tmp_loc, z_tmp_loc = walk_mode(0)
             x_tmp_loc += x_cur_loc
             y_tmp_loc += y_cur_loc
-            z_tmp_loc += y_cur_loc
-            print(x_tmp_loc)
-            print(y_tmp_loc)
-            print(z_tmp_loc)
+            z_tmp_loc += z_cur_loc
             if position_check(0, length, 0, width, z_low, z_high, x_tmp_loc, y_tmp_loc, z_tmp_loc):
                 traj[i] = x_tmp_loc, y_tmp_loc, z_tmp_loc
                 break
@@ -114,16 +111,10 @@ def position_check(x_start: float, x_end: float,
         合法返回 True，不合法返回 False。
     """
     if x < x_start or x > x_end:
-        print(type(x))
-        print(type(x_start))
         return False
     if y < y_start or y > y_end:
-        print(type(y))
-        print(type(y_start))
         return False
     if z < z_start or z > z_end:
-        print(type(z))
-        print(type(z_start))
         return False
     return True
 
