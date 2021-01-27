@@ -10,18 +10,38 @@
 """
 import numpy as np
 import random
+import math
 import matplotlib.pyplot as plt
 
 
-def generator_3d_trajectory(step_num: int, step_len: float = 0.55,
+def generator_3d_trajectory(step_num: int, step_len: float = 0.55, step_mode: int = 0,
                             length: float = 15.0, width: float = 6.0, high: float = 3.0,
-                            random_loc: bool = False, x_initial: float = 0.0,
+                            random_loc: bool = True, x_initial: float = 0.0,
                             y_initial: float = 0.0, z_initial: float = 0.0,
                             x_direct_prob: float = 0.3, y_direct_prob: float = 0.3,
                             z_direct_prob: float = 0.2, static_prob: float = 0.2,
                             z_low: float = 0.0, z_high: float = -1.0):
     """
-    unit: m(米)
+    生成 3d 行走轨迹, unit: m(米).
+    Args:
+        step_num: 步数
+        step_len: 步长，内部取正太分布，step_len为均值，0.1为标准差
+        step_mode: 行走模式，0-x，y，z直角坐标系方向，1-球坐标系方向
+        length: 三维场景的长
+        width: 三维场景的宽
+        high: 三维场景的高
+        random_loc: True-随机位置，False-自定义初始位置
+        x_initial: x坐标初始位置
+        y_initial: y坐标初始位置
+        z_initial: z坐标初始位置
+        x_direct_prob: x坐标方向行走的概率
+        y_direct_prob: y坐标方向行走的概率
+        z_direct_prob: z坐标方向行走的概率
+        static_prob: 静止不走的概率
+        z_low: z轴的最低，考虑人体行走
+        z_high: z轴的最高，考虑人体行走
+    Returns:
+        返回轨迹坐标，维度（step_len + 1, 3）维度
     """
     # param check
     if step_num <= 0 or step_len <= 0:
@@ -33,7 +53,7 @@ def generator_3d_trajectory(step_num: int, step_len: float = 0.55,
     if x_direct_prob < 0 or y_direct_prob < 0 or z_direct_prob < 0 or static_prob < 0 or x_direct_prob + y_direct_prob \
             + z_direct_prob + static_prob != 1:
         raise ValueError("输入参数：运动概率有误！")
-    if z_low < 0:
+    if z_low < 0 or z_high > high:
         raise ValueError("输入参数：z的范围有误！")
     # param init
     if z_high < 0:
@@ -55,22 +75,34 @@ def generator_3d_trajectory(step_num: int, step_len: float = 0.55,
         两种不同的模式进行随机漫步。
         Args:
             mode:
-                0: x、y、z轴方向进行随机漫步
-                1: 任意方向进行随机漫步
+                0: x、y、z轴方向进行随机漫步（直角坐标系）
+                1: 任意方向进行随机漫步（球坐标系）
+                    x = r * sin(theta) * cos(phi)
+                    y = r * sin(theta) * sin(phi)
+                    z = r * cos(theta)
         Returns：
             x_incr, y_incr, z_incr: 三维增量
         """
         x_incr = y_incr = z_incr = 0
+        walk_direction = random.random()
+        if walk_direction > z_direct_prob:
+            return x_incr, y_incr, z_incr
         if mode == 0:
-            walk_direction = random.random()
             if walk_direction <= x_direct_prob:
-                x_incr = np.random.normal(step_len, 0.1) * random.choice([-1, 1])
+                x_incr = random.gauss(step_len, 0.1) * random.choice([-1, 1])
             elif walk_direction <= y_direct_prob:
-                y_incr = np.random.normal(step_len, 0.1) * random.choice([-1, 1])
+                y_incr = random.gauss(step_len, 0.1) * random.choice([-1, 1])
             elif walk_direction <= z_direct_prob:
-                z_incr = np.random.normal(step_len / 2, 0.1) * random.choice([-1, 1])
+                z_incr = random.gauss(step_len / 2, 0.1) * random.choice([-1, 1])
         elif mode == 1:
-            pass
+            r = random.gauss(step_len, 0.1)
+            ratio = y_direct_prob / (z_direct_prob - y_direct_prob)  # (x, y) 方向 与 z 方向的比
+            ratio_radian = math.atan(ratio)
+            theta = random.uniform(ratio_radian, math.pi - ratio_radian)
+            phi = random.uniform(0, 2 * math.pi)
+            x_incr = r * math.sin(theta) * math.cos(phi)
+            y_incr = r * math.sin(theta) * math.sin(phi)
+            z_incr = r * math.cos(theta)
 
         return x_incr, y_incr, z_incr
 
@@ -78,9 +110,7 @@ def generator_3d_trajectory(step_num: int, step_len: float = 0.55,
     for i in range(1, step_num + 1):
         x_cur_loc, y_cur_loc, z_cur_loc = traj[i - 1]
         while True:
-            # TODO: 死循环
-            # print("iteration")
-            x_tmp_loc, y_tmp_loc, z_tmp_loc = walk_mode(0)
+            x_tmp_loc, y_tmp_loc, z_tmp_loc = walk_mode(step_mode)
             x_tmp_loc += x_cur_loc
             y_tmp_loc += y_cur_loc
             z_tmp_loc += z_cur_loc
@@ -120,6 +150,13 @@ def position_check(x_start: float, x_end: float,
 
 
 def draw_trajectory(traj: np.ndarray):
+    """
+    绘制三维空间轨迹。
+    Args:
+        traj: 轨迹坐标
+    Returns:
+        无
+    """
     x = traj[:, 0]
     y = traj[:, 1]
     z = traj[:, 2]
@@ -139,5 +176,17 @@ def draw_trajectory(traj: np.ndarray):
     plt.show()
 
 
-def generator_3d_anchor_location(length: int, width: int, high: int, num_anchor: int):
-    anchor_location = np.array()
+def generator_3d_ranging_data(traj: np.ndarray, anchor_location: np.ndarray, origin_coordinate: np.ndarray,
+
+                              mode: int = 0, nlos_prob: float = 0.2) -> np.ndarray:
+    """
+    根据轨迹生成基站测距数据。
+    Args:
+        traj: 轨迹信息，维度（time_step, 3）, time_step-步长
+        anchor_location: 三维基站坐标，维度（num_anchor, 3）, num_anchor-基站个数
+        origin_coordinate:
+        mode:
+        nlos_prob:
+    Returns:
+        基站测距数据，维数（time_step, num_anchor）
+    """

@@ -18,8 +18,5 @@ class Test(TestCase):
         # print(traj)
 
     def test_draw_trajectory(self):
-        traj = data_generator.generator_3d_trajectory(1000, random_loc=True)
+        traj = data_generator.generator_3d_trajectory(1000, step_mode=1, random_loc=True, z_high=3)
         data_generator.draw_trajectory(traj)
-
-
-
