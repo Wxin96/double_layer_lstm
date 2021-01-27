@@ -14,5 +14,12 @@ from data import data_generator
 
 class Test(TestCase):
     def test_generator_3d_trajectory(self):
-        data_generator.generator_3d_trajectory(5, random_loc=True)
+        traj = data_generator.generator_3d_trajectory(10, random_loc=True)
+        print(traj)
+
+    def test_draw_trajectory(self):
+        traj = data_generator.generator_3d_trajectory(1000, random_loc=True, z_high=2)
+        # data_generator.draw_trajectory(traj)
+
+
 
