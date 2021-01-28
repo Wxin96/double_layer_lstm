@@ -1,5 +1,15 @@
+#!/user/bin/env python
+# coding=utf-8
+"""
+@proj   : double_layer_lstm
+@author : Apollo
+@file   : test_stateful_double_lstm_model.py
+@ide    : PyCharm
+@time   : 2021-01-26 10:56:55
+@desc   ：测试 test_stateful_double_lstm_model 文件中函数
+"""
 from unittest import TestCase
-from core import stateful_double_lstm_model
+from core.model import stateful_double_lstm_model
 
 
 class Test(TestCase):

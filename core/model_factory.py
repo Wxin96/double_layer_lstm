@@ -1,6 +1,6 @@
 from enum import Enum
 
-from core.stateful_double_lstm_model import generate_stateful_lstm_model
+from core.model.stateful_double_lstm_model import generate_stateful_lstm_model
 
 
 class ModelType(Enum):
@@ -17,7 +17,6 @@ class ModelFactory(object):
     """
     @staticmethod
     def product_model(model_type: ModelType, **kwargs):
-        # todo: 了解 *args,**kwargs, model传入参数
         return {
             ModelType.STATEFUL_DOUBLE_LSTM_MODEL: generate_stateful_lstm_model(**kwargs)
         }.get(model_type, None)

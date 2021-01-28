@@ -2,6 +2,9 @@ from keras.models import Sequential
 from keras.layers import LSTM, Dense
 import numpy as np
 from keras.utils import plot_model
+"""
+stateful lstm 测试
+"""
 
 data_dim = 16
 timesteps = 8

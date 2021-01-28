@@ -6,7 +6,7 @@
 @file   : test_data_generator.py
 @ide    : PyCharm
 @time   : 2021-01-26 10:56:55
-@desc   ：
+@desc   ：测试 test_data_generator 文件中函数
 """
 from unittest import TestCase
 from data import data_generator

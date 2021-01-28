@@ -66,7 +66,7 @@ def generator_3d_trajectory(step_num: int, step_len: float = 0.55, step_mode: in
     y_direct_prob += x_direct_prob
     z_direct_prob += y_direct_prob
     static_prob += z_direct_prob
-    traj = np.zeros((step_num + 1, 3))
+    traj = np.zeros((step_num, 3))
     traj[0] = x_initial, y_initial, z_initial
 
     # 行走模式
@@ -107,7 +107,7 @@ def generator_3d_trajectory(step_num: int, step_len: float = 0.55, step_mode: in
         return x_incr, y_incr, z_incr
 
     # iteration, random walk
-    for i in range(1, step_num + 1):
+    for i in range(1, step_num):
         x_cur_loc, y_cur_loc, z_cur_loc = traj[i - 1]
         while True:
             x_tmp_loc, y_tmp_loc, z_tmp_loc = walk_mode(step_mode)
