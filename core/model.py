@@ -11,7 +11,7 @@ class Model():
         self.model
 
     def train(self, x, y, epochs, batch_size, save_dir):
-        x
+        pass
 
 
 

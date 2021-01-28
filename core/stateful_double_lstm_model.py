@@ -29,3 +29,5 @@ model.add(TimeDistributed(Dense(3)))
 model.compile(loss='mean_squared_error', optimizer='nadam')
 
 plot_model(model, to_file='stateful_double_lstm_model.png', show_shapes=True)
+
+
