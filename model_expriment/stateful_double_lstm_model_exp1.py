@@ -49,7 +49,7 @@ def test_stateful_double_lstm_mode_2():
     """
     # 仿真数据
     batch_size = 30
-    step_num = 1_020
+    step_num = 10_020
     model_time_step = 30
     traj_batch = np.zeros(shape=(batch_size, step_num, 3))
     length = 10 * 1.13
@@ -82,10 +82,7 @@ def test_stateful_double_lstm_mode_2():
     ranging_test, traj_test = generator_3d_ranging_data(traj_test, anchors_loc, origin_coordinate,
                                                         los_sd, nlos_bias, nlos_sd, 1)
     model.save("./save_model/stateful_double_lstm_mode_2_1.h5")
-    traj_predict = model.predict(traj_test, batch_size=1, steps=30)
-    print(ranging_test)
-    print(traj_test)
-    print(traj_predict)
+    # traj_predict = model.predict(traj_test, batch_size=1, steps=30)
 
 
 def test_save_model_1():
