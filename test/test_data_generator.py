@@ -33,10 +33,30 @@ class Test(TestCase):
         anchors_loc = np.array(anchors_loc_list)
         origin_coordinate = np.array([2.5, 1.5, 0])
         traj = data_generator.generator_3d_trajectory(10000, step_mode=1, random_loc=True, z_high=3)
-        ranging_data,traj = data_generator.generator_3d_ranging_data(traj, anchors_loc, origin_coordinate,
-                                                                     20e-3, 0.6, 45e-3, 1, 0.4)
+        ranging_data, traj = data_generator.generator_3d_ranging_data(traj, anchors_loc, origin_coordinate,
+                                                                      20e-3, 0.6, 45e-3, 1, 0.4)
         np.set_printoptions(threshold=np.inf)
         print(ranging_data)
         print(traj)
         print(ranging_data.shape)
         print(traj.shape)
+
+    def test_light_num(self):
+        light_num(540, 16, [0, 90, 180, 270, 360, 450, 540])
+        print()
+        light_num(270, 16, [0, 45, 90,  135, 180, 225, 270])
+
+
+def light_num(range: int, digital_num: int, list: []):
+    """
+    舞台灯角度测试
+    :param range:
+    :param digital_num:
+    :param list:
+    :return:
+    """
+    for angle in list:
+        num = 2 ** digital_num * angle // range
+        low = num & 0xff
+        high = (num >> 8) & 0xff
+        print(angle, high, low)
