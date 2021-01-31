@@ -39,5 +39,3 @@ model.fit(x_train, y_train,
           epochs=20,
           batch_size=128)
 score = model.evaluate(x_test, y_test, batch_size=128)
-# 预测
-model.predict()
