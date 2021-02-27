@@ -217,6 +217,7 @@ def generator_3d_ranging_data(traj: np.ndarray, anchors_location: np.ndarray, or
     return ranging_data, traj
 
 
+# TODO：此处每次 NLOS 都是随机的，写一个局部连续的NLOS测距
 def generator_single_ranging(anchor_loc: np.ndarray, tag_loc: np.ndarray, bias: float, sd: float) -> float:
     """
     根据基站和标签位置，添加偏差和正态分布随机误差，模拟生成测距数据.
@@ -232,3 +233,32 @@ def generator_single_ranging(anchor_loc: np.ndarray, tag_loc: np.ndarray, bias: 
     dist = np.linalg.norm(anchor_loc - tag_loc)
     dist += random.gauss(bias, sd)
     return dist
+
+
+def generate_point_location_ranging(anchors_loc: np.ndarray, tag_loc: np.ndarray, nlos_prob, nlos_bias: float,
+                                    nlos_sd: float, los_sd: float) -> np.ndarray:
+    """
+    返回单个点的测距数据。
+    Args:
+        anchors_loc: 基站坐标, 向量维度：（num_anchor，3）
+        tag_loc: 标签坐标，（3，1）
+        nlos_prob: nlos概率
+        nlos_bias: 偏置
+        los_sd: 标准差
+
+    Returns:
+        测距数据，（num_anchor，）
+    """
+    assert anchors_loc.shape == (len(anchors_loc), 3)
+    assert tag_loc.shape == (3,)
+    assert 0 <= nlos_prob <= 1
+    point_ranging = np.zeros(len(anchors_loc))
+    nlos_num = 0
+    for i in range(len(point_ranging)):
+        if random.random() < nlos_prob:
+            point_ranging[i] = generator_single_ranging(anchors_loc[i], tag_loc, nlos_bias, nlos_sd)
+            nlos_num += 1
+        else:
+            point_ranging[i] = generator_single_ranging(anchors_loc[i], tag_loc, 0, los_sd)
+    # print("nlos次数为：" + str(nlos_num))
+    return point_ranging

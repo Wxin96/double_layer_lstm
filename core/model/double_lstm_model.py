@@ -9,7 +9,7 @@ def generate_lstm_model(**kwargs) -> Sequential:
     batch_size = kwargs.get('batch_size', 30)  # 训练样本批次
     time_step = kwargs.get('time_step', 30)  # 时间步长
     input_dim = kwargs.get('input_dim', 4)  # x的特征数目
-    hidden_units = kwargs.get('hidden_units', 256)  # 隐藏层神经元个数
+    hidden_units = kwargs.get('hidden_units', 128)  # 隐藏层神经元个数
     dropout_rate = kwargs.get('dropout_rate', 0.2)  # 正则化层概率
 
     # 期望输入数据尺寸: (batch_size, time_step, input_dim)
@@ -19,13 +19,15 @@ def generate_lstm_model(**kwargs) -> Sequential:
     model = Sequential()
     # 个人猜测 recurrent_activation为门激活函数, activation为输入 c~的激活函数
     model.add(LSTM(units=hidden_units, activation='tanh',
-                   recurrent_activation='sigmoid', return_sequences=True,
+                   recurrent_activation='tanh', return_sequences=True,
                    batch_input_shape=(batch_size, time_step, input_dim)))
     model.add(Dropout(dropout_rate))
     model.add(LSTM(units=hidden_units, activation='tanh',
                    recurrent_activation='sigmoid', return_sequences=True,
                    stateful=True))
     model.add(Dropout(dropout_rate))
+    # model.add(TimeDistributed(Dense(hidden_units//2, activation='relu')))
+    # model.add(Dropout(dropout_rate))
     model.add(TimeDistributed(Dense(3)))
 
     # 未定义评价函数
@@ -34,4 +36,3 @@ def generate_lstm_model(**kwargs) -> Sequential:
     plot_model(model, to_file='double_lstm_model.png', show_shapes=True)
 
     return model
-

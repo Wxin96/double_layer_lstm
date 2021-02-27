@@ -103,7 +103,7 @@ def test_double_lstm_mode():
     anchors_loc = np.array([[-3.29, 1.13, 1.66], [3.57, -1.13, 0.925], [3.57, 2.26, 1.950], [-2.26, 3.39, 2.230]])
     origin_coordinate = np.array([4 * 1.13, 2 * 1.13, 0])
     los_sd = 20e-3
-    nlos_bias = 0.6
+    nlos_bias = 0.2
     nlos_sd = 45e-3
     ranging_batch = np.zeros(shape=(batch_size, step_num, len(anchors_loc)))
     for i in range(batch_size):
@@ -111,7 +111,7 @@ def test_double_lstm_mode():
                                                 high=high,
                                                 z_high=z_high)
         ranging_batch[i], traj_batch[i] = generator_3d_ranging_data(traj_batch[i], anchors_loc, origin_coordinate,
-                                                                    los_sd, nlos_bias, nlos_sd, 1)
+                                                                    los_sd, nlos_bias, nlos_sd, 0)
     ranging_batch = ranging_batch.reshape((step_num // model_time_step * batch_size, model_time_step, len(anchors_loc)))
     traj_batch = traj_batch.reshape((step_num // model_time_step * batch_size, model_time_step, 3))
     # 当前x-(batch_size, step_num, anchors_loc), y-(batch_size, step_num, 3)
@@ -124,9 +124,9 @@ def test_double_lstm_mode():
     traj_test = generator_3d_trajectory(step_num=30, step_mode=1, length=length, width=width, high=high,
                                         z_high=z_high)
     ranging_test, traj_test = generator_3d_ranging_data(traj_test, anchors_loc, origin_coordinate,
-                                                        los_sd, nlos_bias, nlos_sd, 1)
-    model.save("./save_model/double_lstm_model_epoch_1000.h5")
-    traj_predict = model.predict(traj_batch, batch_size=30)
+                                                        los_sd, nlos_bias, nlos_sd, 0)
+    model.save("./save_model/double_lstm_model_epoch_1000_0224.h5")
+    traj_predict = model.__predict(traj_batch, batch_size=30)
     print(traj_batch)
     print(traj_predict)
     print(traj_predict - traj_batch)
@@ -152,7 +152,7 @@ def test_save_model_1():
     anchors_loc = np.array([[-3.29, 1.13, 1.66], [3.57, -1.13, 0.925], [3.57, 2.26, 1.950], [-2.26, 3.39, 2.230]])
     origin_coordinate = np.array([4 * 1.13, 2 * 1.13, 0])
     los_sd = 20e-3
-    nlos_bias = 0.6
+    nlos_bias = 0.2
     nlos_sd = 45e-3
     ranging_batch = np.zeros(shape=(batch_size, step_num, len(anchors_loc)))
     for i in range(batch_size):
@@ -164,10 +164,10 @@ def test_save_model_1():
     ranging_batch = ranging_batch.reshape((step_num // model_time_step * batch_size, model_time_step, len(anchors_loc)))
     traj_batch = traj_batch.reshape((step_num // model_time_step * batch_size, model_time_step, 3))
     # model
-    model = load_model("./save_model/double_lstm_model_epoch_1000.h5")
+    model = load_model("./save_model/double_lstm_model_epoch_1000.h5+")
     model.summary()
 
-    traj_predict = model.predict(ranging_batch, batch_size=30, steps=30)
+    traj_predict = model.__predict(ranging_batch, batch_size=30, steps=30)
     print(traj_predict)
     print(traj_batch)
     print(traj_predict - traj_batch)
@@ -191,7 +191,7 @@ def test_save_model_2():
     anchors_loc = np.array([[-3.29, 1.13, 1.66], [3.57, -1.13, 0.925], [3.57, 2.26, 1.950], [-2.26, 3.39, 2.230]])
     origin_coordinate = np.array([4 * 1.13, 2 * 1.13, 0])
     los_sd = 20e-3
-    nlos_bias = 0.6
+    nlos_bias = 0.2
     nlos_sd = 45e-3
     model = load_model("./save_model/stateful_double_lstm_mode_2_1.h5")
     model.summary()
@@ -202,15 +202,15 @@ def test_save_model_2():
     ranging_test = np.zeros(shape=(1, 30, 4))
     ranging_test[0], traj_test[0] = generator_3d_ranging_data(traj_test[0], anchors_loc, origin_coordinate,
                                                               los_sd, nlos_bias, nlos_sd, 1)
-    traj_predict = model.predict(ranging_test, batch_size=1, steps=30)
+    traj_predict = model.__predict(ranging_test, batch_size=1, steps=30)
     # print(ranging_test)
     # print(traj_test)
     # print(traj_predict)
 
 
 if __name__ == '__main__':
-    os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+    # os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
     # test_stateful_double_lstm_mode_2()
-    test_save_model_1()
-    # test_double_lstm_mode()
+    # test_save_model_1()
+    test_double_lstm_mode()
     pass

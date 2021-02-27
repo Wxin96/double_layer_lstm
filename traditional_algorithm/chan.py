@@ -1,10 +1,11 @@
 import numpy as np
 
-from traditional_algorithm.location import Location
+from traditional_algorithm.location import Location, LocationType
 
 
 class Chan(Location):
-    def positioning(self, anchors_loc: np.ndarray, ranging_data: np.ndarray,
+    @staticmethod
+    def positioning(method: LocationType, anchors_loc: np.ndarray, ranging_data: np.ndarray,
                     init_position: np.ndarray = None) -> np.ndarray:
         """
         在三维空间中，利用 基站位置、测距数据、初始位置进行定位。
@@ -14,4 +15,6 @@ class Chan(Location):
         :return: 定位结果, 维数(3, )
         """
         super().param_check(anchors_loc, ranging_data, init_position)
+        Ga = np.ones(shape=(len(anchors_loc), 4))
+        Ga[:, 0:2] = -2 * anchors_loc
         pass

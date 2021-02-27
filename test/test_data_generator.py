@@ -12,6 +12,8 @@ from unittest import TestCase
 from data import data_generator
 import numpy as np
 
+from data.data_generator import generate_point_location_ranging
+
 
 class Test(TestCase):
     def test_generator_3d_trajectory(self):
@@ -45,6 +47,12 @@ class Test(TestCase):
         light_num(540, 16, [0, 90, 180, 270, 360, 450, 540])
         print()
         light_num(270, 16, [0, 45, 90,  135, 180, 225, 270])
+
+    def test_generate_point_location_ranging(self):
+        anchors_loc = np.array([[-3.29, 1.13, 1.66], [3.57, -1.13, 0.925], [3.57, 2.26, 1.950], [-2.26, 3.39, 2.230]])
+        tag_loc = np.array([0, 1.13, 1.0])
+        point_ranging = generate_point_location_ranging(anchors_loc, tag_loc, 0, 0)
+        print(point_ranging)
 
 
 def light_num(range: int, digital_num: int, list: []):
