@@ -12,6 +12,7 @@ import numpy as np
 import random
 import math
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 
 
 def generator_3d_trajectory(step_num: int, step_len: float = 0.55, step_mode: int = 0,
@@ -157,22 +158,16 @@ def draw_trajectory(traj: np.ndarray):
     Returns:
         无
     """
+    assert traj.shape == (len(traj), 3)
     x = traj[:, 0]
     y = traj[:, 1]
     z = traj[:, 2]
-    # new a figure and set it into 3d
-    fig = plt.figure()
-    ax = fig.gca(projection='3d')
 
-    # set figure information
-    ax.set_title("3D_Curve")
-    ax.set_xlabel("x")
-    ax.set_ylabel("y")
-    ax.set_zlabel("z")
-
-    # draw the figure, the color is r = read
-    figure = ax.plot(x, y, z, c='r')
-
+    ax = plt.subplot(111, projection='3d')
+    ax.scatter(x, y, z, c='r')
+    ax.set_zlabel('Z')  # 坐标轴
+    ax.set_ylabel('Y')
+    ax.set_xlabel('X')
     plt.show()
 
 
@@ -203,17 +198,39 @@ def generator_3d_ranging_data(traj: np.ndarray, anchors_location: np.ndarray, or
     ranging_data = np.zeros(shape=(len(traj), len(anchors_location)))
     # coordinate translation
     traj -= origin_coordinate
+    # 重新生成NLOS情况，分阶段性
+    # los情况 步数
+    # nlos情况，步数
+    env_num = 1  # >= 处于当前环境未结束
+    env_mode = -1  # -1 => los, 0,1,...,n-1 基站序号
     # generator 3d ranging data
     for traj_idx in range(len(traj)):
+        if env_num <= 0 and mode == 1:
+            # 重新生成步数
+            env_num = random.randint(5, 20)
+            # 模式重新生成
+            if random.random() < nlos_prob:
+                env_mode = random.randint(0, len(anchors_location) - 1)
+            else:
+                env_mode = -1
+            pass
         for anchor_idx in range(len(anchors_location)):
             if mode == 1:
-                ranging_data[traj_idx][anchor_idx] = \
-                    generator_single_ranging(anchors_location[anchor_idx], traj[traj_idx], nlos_bias, nlos_sd) \
-                        if random.random() < nlos_prob \
-                        else generator_single_ranging(anchors_location[anchor_idx], traj[traj_idx], 0, los_sd)
+                if env_mode == anchor_idx:
+                    ranging_data[traj_idx][anchor_idx] \
+                        = generator_single_ranging(anchors_location[anchor_idx], traj[traj_idx], nlos_bias, nlos_sd)
+                    # 进行了一步, nlos
+                    env_num -= 1
+                    print("nlos存在")
+                else:
+                    ranging_data[traj_idx][anchor_idx] \
+                        = generator_single_ranging(anchors_location[anchor_idx], traj[traj_idx], 0, los_sd)
             else:
                 ranging_data[traj_idx][anchor_idx] = \
                     generator_single_ranging(anchors_location[anchor_idx], traj[traj_idx], 0, los_sd)
+        # los走了一步
+        if env_mode == -1:
+            env_num -= 1
     return ranging_data, traj
 
 
@@ -262,3 +279,103 @@ def generate_point_location_ranging(anchors_loc: np.ndarray, tag_loc: np.ndarray
             point_ranging[i] = generator_single_ranging(anchors_loc[i], tag_loc, 0, los_sd)
     # print("nlos次数为：" + str(nlos_num))
     return point_ranging
+
+
+# 新增轨迹生成方式
+def generator_3d_trajectory_2(step_num: int, length: float = 15.0, width: float = 6.0, high: float = 3.0,
+                              random_loc_flag: bool = True, x_initial: float = 0.0,
+                              y_initial: float = 0.0, z_initial: float = 0.0,
+                              z_low: float = 0.0, z_high: float = 2.0,
+                              speed: float = 1.5, delta_t: float = 0.2) -> np.ndarray:
+    """
+    考虑速度生成轨迹，目前是恒定速度直线方式前进。
+    :param step_num: 总步长
+    :param length: 三维空间长，unit: m
+    :param width: 三维空间宽，unit：m
+    :param high: 三维空间，unit：m
+    :param random_loc_flag: True，随机位置；
+    :param x_initial: random_loc=False, 初始位置x坐标，unit：m
+    :param y_initial: 。。。
+    :param z_initial: 。。。
+    :param z_low: 随机位置，z的最小值
+    :param z_high: 随机位置，z的最大值
+    :param speed 行走速度，unit：m/s
+    :param delta_t 采样间隔，unit: s
+    :return: 返回轨迹
+    """
+    # param check
+    if step_num <= 0:
+        raise ValueError("输入参数：步长或步数有误！")
+    if length <= 0 or width <= 0 or high <= 0:
+        raise ValueError("输入参数：三维空间大小参数有误！")
+    if x_initial < 0 or x_initial > length or y_initial < 0 or y_initial > width or z_initial < 0 or z_initial > high:
+        raise ValueError("输入参数：初始位置有误！")
+
+    # 初始位置
+    def random_loc():
+        x_random = length * random.random()
+        y_random = width * random.random()
+        z_random = z_high * random.random()
+        return np.array([[x_random, y_random, z_random]])
+
+    if random_loc_flag:
+        loc = random_loc()
+        # print(loc)
+        x_initial = loc[0, 0]
+        y_initial = loc[0, 1]
+        z_initial = loc[0, 2]
+    # 轨迹
+    step_idx = 0
+    traj = np.zeros(shape=(step_num, 3))
+    traj[step_idx, :] = np.array([x_initial, y_initial, z_initial])
+    # 轨迹生成
+    while step_idx < step_num - 1:
+        dest_loc = random_loc()
+        if np.linalg.norm(dest_loc - traj[step_idx].reshape(1, 3)) < 5:
+            continue
+        tmp_traj = walk_line_a2b(traj[step_idx].reshape(1, 3), dest_loc, speed, delta_t)
+        len_tmp_traj = len(tmp_traj)
+        if step_idx + len_tmp_traj < step_num:
+            traj[step_idx + 1:step_idx + len_tmp_traj + 1] = tmp_traj
+            step_idx = step_idx + len_tmp_traj
+        else:
+            traj[step_idx + 1:step_num] = tmp_traj[0:step_num - step_idx - 1]
+            step_idx = step_num - 1
+        pass
+    return traj
+    pass
+
+
+# 均衡速度直线行走
+def walk_line_a2b(a_loc: np.ndarray, b_loc: np.ndarray, speed: float, delta_t: float) -> np.ndarray:
+    """
+    速度为 speed m/s, 从 a点 沿着直线 以恒定速度走到 b点
+    :param a_loc: 起点，维数：（1,3）
+    :param b_loc: 终点，维度，
+    :param speed: 人行走速度
+    :param delta_t: 采样间隔
+    :return: 返回轨迹坐标，维度-（ ， 3）[含尾不含头]
+    """
+    assert a_loc.shape == (1, 3)
+    assert b_loc.shape == (1, 3)
+    # 计算各个轴速度
+    direct = b_loc - a_loc
+    dist = np.linalg.norm(direct)
+    direct = direct / dist
+    # print(direct)
+    x_speed = speed * direct[0, 0]
+    y_speed = speed * direct[0, 1]
+    z_speed = speed * direct[0, 2]
+    move_speed = np.array([x_speed, y_speed, z_speed])
+    # 计算需要多少步
+    step = math.ceil(dist / speed / delta_t)
+    traj = np.zeros(shape=(step, 3))
+    step_len = move_speed * delta_t
+    for i in range(step):
+        if i == 0:
+            traj[i] = step_len + a_loc[0]
+        else:
+            traj[i] = traj[i - 1] + step_len
+    # print(traj)
+    return traj
+    pass

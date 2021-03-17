@@ -12,7 +12,8 @@ from unittest import TestCase
 from data import data_generator
 import numpy as np
 
-from data.data_generator import generate_point_location_ranging
+from data.data_generator import generate_point_location_ranging, walk_line_a2b, draw_trajectory, \
+    generator_3d_trajectory_2
 
 
 class Test(TestCase):
@@ -53,6 +54,20 @@ class Test(TestCase):
         tag_loc = np.array([0, 1.13, 1.0])
         point_ranging = generate_point_location_ranging(anchors_loc, tag_loc, 0, 0)
         print(point_ranging)
+
+    def test_walk_line_a2b(self):
+        a_loc = np.array([[0, 0, 0]])
+        b_loc = np.array([[3, 4, 13]])
+        speed = 1.5     # unit: m/s
+        delta_t = 0.2   # unit: s
+        traj = walk_line_a2b(a_loc, b_loc, speed, delta_t)
+        pass
+
+    def test_generator_3d_trajectory_2(self):
+        traj = generator_3d_trajectory_2(1000)
+        # print(traj)
+        # draw_trajectory(traj)
+        pass
 
 
 def light_num(range: int, digital_num: int, list: []):
