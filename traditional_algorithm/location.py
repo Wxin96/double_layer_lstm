@@ -3,6 +3,9 @@ from abc import ABCMeta, abstractmethod
 import numpy as np
 import math
 
+from traditional_algorithm.ekf import EKF
+from traditional_algorithm.kf import KF
+
 
 class LocationType(Enum):
     """
@@ -11,6 +14,8 @@ class LocationType(Enum):
     Chan_3d = 1
     Taylor_3d = 2
     Chan_Taylor_3d = 3
+    EKF_3d = 4
+    C_T_K_3d = 5
 
 
 class Location(metaclass=ABCMeta):
@@ -41,7 +46,7 @@ class Location(metaclass=ABCMeta):
 
     @staticmethod
     def positioning(method: LocationType, anchors_loc: np.ndarray, ranging_data: np.ndarray, cov_mat: np.ndarray,
-                    init_position: np.ndarray = None, **kwargs) -> np.ndarray or None:
+                    init_position: np.ndarray = None, kf:KF = None, ekf: EKF = None, **kwargs) -> np.ndarray or None:
         """
         在三维空间中，利用 基站位置、测距数据、初始位置进行定位。
         :param method: 测距方法
@@ -49,6 +54,8 @@ class Location(metaclass=ABCMeta):
         :param ranging_data: 基站测距数据，维数（num_anchor,）
         :param cov_mat: 测距的协方差矩阵, (num_anchor, )，单位：m
         :param init_position: 初始估计位置，维数（3,）
+        :param ekf: 扩展卡尔曼滤波器
+        :param kf: 卡尔曼滤波器
         :return: 定位结果, 维数(3, )
         """
         Location.param_check(anchors_loc, ranging_data, cov_mat, init_position)
@@ -58,9 +65,40 @@ class Location(metaclass=ABCMeta):
             return Location.taylor_3d(anchors_loc, ranging_data, cov_mat, init_position, **kwargs)
         elif method is LocationType.Chan_Taylor_3d:
             return Location.chan_taylor_3d(anchors_loc, ranging_data, cov_mat)
+        elif method is LocationType.EKF_3d:
+            if ekf is None: raise RuntimeError('ekf不能为None')
+            return Location.ekf_3d(ekf=ekf, ranging_data=ranging_data)
+        elif method is LocationType.C_T_K_3d:
+            if kf is None: raise RuntimeError('ekf不能为None')
+            loc = Location.chan_taylor_3d(anchors_loc, ranging_data, cov_mat)
+            return Location.kf_3d(kf, loc)
         else:
             return None
         pass
+
+    @staticmethod
+    def kf_3d(kf: KF, loc: np.ndarray):
+        """
+        利用卡尔曼滤波对C-T数据进行处理
+        :param kf: 卡尔曼滤波实例，已提前初始化
+        :param loc: 位置，维度-（3,）
+        :return: 返回位置，维度-（3，）
+        """
+        assert isinstance(kf, KF)
+        return kf.iteration(loc.reshape(Location.__dimension, 1)).reshape(Location.__dimension)
+        pass
+
+    @staticmethod
+    def ekf_3d(ekf: EKF, ranging_data: np.ndarray):
+        """
+        利用扩展卡尔曼进行滤波
+        :param ekf: 扩展卡尔曼实例，已提前初始化
+        :param ranging_data: 测距数据，维度（num_anchor，）
+        :return: 定位数据，维度-（3，）
+        """
+        assert isinstance(ekf, EKF)
+        num_anchor = len(ranging_data)
+        return ekf.iteration(ranging_data.reshape((num_anchor, 1))).reshape(Location.__dimension)
 
     @staticmethod
     def chan_3d(anchors_loc: np.ndarray, ranging_data: np.ndarray, cov_mat: np.ndarray):
@@ -177,7 +215,7 @@ class Location(metaclass=ABCMeta):
             pos = delta_pos + pos
             curDelta = np.linalg.norm(delta_pos)
             if curDelta < delta: break
-        print("迭代了", curIterator, "次")
+        # print("迭代了", curIterator, "次")
         return pos
 
     @staticmethod

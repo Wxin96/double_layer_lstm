@@ -22,7 +22,7 @@ class TestTraditionalAlgorithm(TestCase):
         cov_mat = np.diag(np.array([0.0003, 0.0003, 0.0003, 0.0003]))
         point_ranging = generate_point_location_ranging(anchors_loc, tag_loc, nlos_prob=0.1, nlos_bias=0.1,
                                                         nlos_sd=0.05, los_sd=0.017)
-        Location.positioning(LocationType.Chan_3d, anchors_loc, point_ranging, cov_mat)
+        Location.positioning(LocationType.Chan_3d, anchors_loc, point_ranging, cov_mat, kf=卡尔曼滤波器)
 
     def test_taylor_positioning(self):
         anchors_loc = np.array([[-3.29, 1.13, 1.66], [3.57, -1.13, 0.925], [3.57, 2.26, 1.950], [-2.26, 3.39, 2.230]])
@@ -30,10 +30,10 @@ class TestTraditionalAlgorithm(TestCase):
         cov_mat = np.diag(np.array([0.0003, 0.0003, 0.0003, 0.0003]))
         point_ranging = generate_point_location_ranging(anchors_loc, tag_loc, nlos_prob=0.2, nlos_bias=0.2,
                                                         nlos_sd=0.05, los_sd=0.017)
-        init_pos = Location.positioning(LocationType.Chan_3d, anchors_loc, point_ranging, cov_mat)
+        init_pos = Location.positioning(LocationType.Chan_3d, anchors_loc, point_ranging, cov_mat, kf=卡尔曼滤波器)
         print('init_pos: ', init_pos)
-        pos = Location.positioning(LocationType.Taylor_3d, anchors_loc, point_ranging, cov_mat,
-                                   init_pos.reshape(3), iteratorNum=501, delta=0.005)
+        pos = Location.positioning(LocationType.Taylor_3d, anchors_loc, point_ranging, cov_mat, init_pos.reshape(3),
+                                   卡尔曼滤波器, iteratorNum=501, delta=0.005)
         print('pos: ', pos)
         pass
 
@@ -43,7 +43,7 @@ class TestTraditionalAlgorithm(TestCase):
         cov_mat = np.diag(np.array([0.0003, 0.0003, 0.0003, 0.0003]))
         point_ranging = generate_point_location_ranging(anchors_loc, tag_loc, nlos_prob=0.2, nlos_bias=0.2,
                                                         nlos_sd=0.05, los_sd=0.017)
-        pos = Location.positioning(LocationType.Chan_Taylor_3d, anchors_loc, point_ranging,
-                                   cov_mat, iteratorNum=501, delta=0.005)
+        pos = Location.positioning(LocationType.Chan_Taylor_3d, anchors_loc, point_ranging, cov_mat, kf=卡尔曼滤波器,
+                                   iteratorNum=501, delta=0.005)
         print('pos: ', pos)
         print('error: ', np.linalg.norm(tag_loc - pos))

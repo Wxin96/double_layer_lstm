@@ -12,7 +12,12 @@ from keras.models import load_model
 from core.model_factory import ModelFactory, ModelType
 from data.data_generator import generator_3d_trajectory, generator_3d_ranging_data, generator_3d_trajectory_2
 import numpy as np
+from keras.utils import plot_model
+import matplotlib.pyplot as plt
 import os
+
+from util.util_evaluate import Evaluate
+from util.util_model import ModelUtil
 
 
 def test_stateful_double_lstm_mode():
@@ -224,12 +229,12 @@ def test_double_lstm_mode_line_traj_nlos():
     width = 6 * 1.13
     high = 3.5
     z_high = 2.0
-    anchors_loc = np.array([[-3.29, 1.13, 1.66], [3.57, -1.13, -0.925], [3.57, 2.26, 1.950], [-2.26, 3.39, -2.230]])
-    origin_coordinate = np.array([4 * 1.13, 2 * 1.13, 0])
-    los_sd = 30e-3
+    anchors_loc = np.array([[-3, 1, 0.5], [4, -1., 0.], [3, 3, 2], [-2., 3, 2.5]])
+    origin_coordinate = np.array([4, 2, 0])
+    los_sd = 50e-3
     # los_sd = 0
     nlos_bias = 0.4
-    nlos_sd = 50e-3
+    nlos_sd = 80e-3
     ranging_batch = np.zeros(shape=(batch_size, step_num, len(anchors_loc)))
     for i in range(batch_size):
         traj_batch[i] = generator_3d_trajectory_2(step_num=step_num,
@@ -244,7 +249,7 @@ def test_double_lstm_mode_line_traj_nlos():
     model = ModelFactory.product_model(ModelType.DOUBLE_LSTM_MODEL, input_dim=4)
     model.fit(x=ranging_batch, y=traj_batch, batch_size=batch_size, epochs=1000)
 
-    model.save("./save_model/double_lstm_model_epoch_1000_0311_line_traj_nlos_2.h5")
+    model.save("./save_model/double_lstm_model_epoch_1000_0318_line_traj_nlos_3.h5")
 
 def test_double_lstm_mode_unit_cm():
     """
@@ -398,26 +403,33 @@ def test_save_model_4():
     :return:
     """
     # 生成数据
-    anchors_loc = np.array([[-3.29, 1.13, 1.66], [3.57, -1.13, -0.925], [3.57, 2.26, 1.950], [-2.26, 3.39, -2.230]])
-    origin_coordinate = np.array([4 * 1.13, 2 * 1.13, 0])
+    anchors_loc = np.array([[-3, 1, 0.5], [4, -1., 0.], [3, 3, 2], [-2., 3, 2.5]])
+    origin_coordinate = np.array([4, 2, 0])
     length = 10 * 1.13
     width = 6 * 1.13
     high = 3.5
     z_high = 2.0
     los_sd = 100e-3
     nlos_bias = 0.4
-    nlos_sd = 50e-3
+    nlos_sd = 80e-3
 
     traj_data = generator_3d_trajectory_2(30, length=length, width=width, high=high, z_high=z_high)
-    # traj_data = np.zeros((30, 3)) + np.array([1, 2, 1.5])
+    traj_data = np.zeros((60, 3)) + np.array([1, 2, 1.5])
     ranging_data, traj_data = generator_3d_ranging_data(traj_data, anchors_loc, origin_coordinate,
                                                                 los_sd, nlos_bias, nlos_sd, mode=0)
     # 载入模型
-    model = load_model("./save_model/double_lstm_model_epoch_1000_0312_line_traj_los0.1_2.h5")
+    model = load_model("./save_model/double_lstm_model_epoch_1000_0318_line_traj_nlos_3.h5")
     model.summary()
-
-    traj_predict = model.predict(ranging_data.reshape(1, 30, 4))
+    plot_model(model, to_file='double_lstm_model_0319.png', show_shapes=True, expand_nested=True)
+    traj_predict = model.predict(ranging_data.reshape(1, 60, 4))
     print(traj_predict - traj_data)
+    print(traj_predict)
+    print(
+        Evaluate.calc_mean_rmse(np.array([-3, 0, 1.5]), traj_predict.reshape(60, 3))
+    )
+
+    # print(ModelUtil.model_predit("../model_expriment/save_model/double_lstm_model_epoch_1000_0318_line_traj_nlos_3.h5",
+    #                              ranging_data))
     pass
 
 
@@ -425,7 +437,7 @@ if __name__ == '__main__':
     # os.environ["CUDA_VISIBLE_DEVICES"] = "-1" # 强制使用CPU
     np.set_printoptions(threshold=np.inf)  # print 打印矩阵完全
 
-    # test_double_lstm_mode_line_traj_los()
+    # test_double_lstm_mode_line_traj_nlos()
     test_save_model_4()
 
     pass

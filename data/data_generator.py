@@ -14,6 +14,8 @@ import math
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
+from macro.Mode import RangingMode
+
 
 def generator_3d_trajectory(step_num: int, step_len: float = 0.55, step_mode: int = 0,
                             length: float = 15.0, width: float = 6.0, high: float = 3.0,
@@ -196,6 +198,7 @@ def generator_3d_ranging_data(traj: np.ndarray, anchors_location: np.ndarray, or
     assert los_sd >= 0 and nlos_sd >= 0 and 0 <= nlos_prob <= 1
     # init
     ranging_data = np.zeros(shape=(len(traj), len(anchors_location)))
+    nlos_record = np.zeros(shape=(len(traj)))
     # coordinate translation
     traj -= origin_coordinate
     # 重新生成NLOS情况，分阶段性
@@ -205,7 +208,7 @@ def generator_3d_ranging_data(traj: np.ndarray, anchors_location: np.ndarray, or
     env_mode = -1  # -1 => los, 0,1,...,n-1 基站序号
     # generator 3d ranging data
     for traj_idx in range(len(traj)):
-        if env_num <= 0 and mode == 1:
+        if env_num <= 0 and (mode == 1 or mode == RangingMode.NLOS):
             # 重新生成步数
             env_num = random.randint(5, 20)
             # 模式重新生成
@@ -215,12 +218,13 @@ def generator_3d_ranging_data(traj: np.ndarray, anchors_location: np.ndarray, or
                 env_mode = -1
             pass
         for anchor_idx in range(len(anchors_location)):
-            if mode == 1:
+            if mode == 1 or mode == RangingMode.NLOS:
                 if env_mode == anchor_idx:
                     ranging_data[traj_idx][anchor_idx] \
                         = generator_single_ranging(anchors_location[anchor_idx], traj[traj_idx], nlos_bias, nlos_sd)
                     # 进行了一步, nlos
                     env_num -= 1
+                    nlos_record[traj_idx] = 1
                     print("nlos存在")
                 else:
                     ranging_data[traj_idx][anchor_idx] \
@@ -231,10 +235,9 @@ def generator_3d_ranging_data(traj: np.ndarray, anchors_location: np.ndarray, or
         # los走了一步
         if env_mode == -1:
             env_num -= 1
-    return ranging_data, traj
+    return ranging_data, traj, nlos_record
 
 
-# TODO：此处每次 NLOS 都是随机的，写一个局部连续的NLOS测距
 def generator_single_ranging(anchor_loc: np.ndarray, tag_loc: np.ndarray, bias: float, sd: float) -> float:
     """
     根据基站和标签位置，添加偏差和正态分布随机误差，模拟生成测距数据.
@@ -352,8 +355,8 @@ def walk_line_a2b(a_loc: np.ndarray, b_loc: np.ndarray, speed: float, delta_t: f
     速度为 speed m/s, 从 a点 沿着直线 以恒定速度走到 b点
     :param a_loc: 起点，维数：（1,3）
     :param b_loc: 终点，维度，
-    :param speed: 人行走速度
-    :param delta_t: 采样间隔
+    :param speed: 人行走速度, unit: m/s
+    :param delta_t: 采样间隔, unit: s
     :return: 返回轨迹坐标，维度-（ ， 3）[含尾不含头]
     """
     assert a_loc.shape == (1, 3)

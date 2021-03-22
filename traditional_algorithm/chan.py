@@ -5,10 +5,11 @@ from traditional_algorithm.location import Location, LocationType
 
 class Chan(Location):
     @staticmethod
-    def positioning(method: LocationType, anchors_loc: np.ndarray, ranging_data: np.ndarray,
-                    init_position: np.ndarray = None) -> np.ndarray:
+    def positioning(method: LocationType, anchors_loc: np.ndarray, ranging_data: np.ndarray, cov_mat: np.ndarray = None,
+                    kf=None) -> np.ndarray:
         """
         在三维空间中，利用 基站位置、测距数据、初始位置进行定位。
+        :param kf:
         :param anchors_loc: 基站位置，维数（num_anchor, 3）
         :param ranging_data: 基站测距数据，维数（num_anchor,）
         :param init_position: 初始估计位置，维数（3,）

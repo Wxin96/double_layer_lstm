@@ -38,8 +38,8 @@ class TestEKF(TestCase):
             #                                                 nlos_sd=0.05, los_sd=0.0173)
             point_ranging = generate_point_location_ranging(anchors_loc, tag_loc, nlos_prob=0.0, nlos_bias=0.2,
                                                             nlos_sd=0.05, los_sd=0.0173)
-            pos = Location.positioning(LocationType.Chan_Taylor_3d, anchors_loc, point_ranging,
-                                       cov_mat, iteratorNum=501, delta=0.005)
+            pos = Location.positioning(LocationType.Chan_Taylor_3d, anchors_loc, point_ranging, cov_mat, kf=卡尔曼滤波器,
+                                       iteratorNum=501, delta=0.005)
             print('pos: ', pos)
             loc = ekf.iteration(point_ranging.reshape((4, 1)))
             print(loc, '\n')
@@ -64,8 +64,8 @@ class TestEKF(TestCase):
             #                                                 nlos_sd=0.05, los_sd=0.0173)
             point_ranging = generate_point_location_ranging(anchors_loc, tag_loc, nlos_prob=0.0, nlos_bias=0.2,
                                                             nlos_sd=0.05, los_sd=0.0173)
-            pos = Location.positioning(LocationType.Chan_Taylor_3d, anchors_loc, point_ranging,
-                                       cov_mat, iteratorNum=501, delta=0.005)
+            pos = Location.positioning(LocationType.Chan_Taylor_3d, anchors_loc, point_ranging, cov_mat, kf=卡尔曼滤波器,
+                                       iteratorNum=501, delta=0.005)
             print('pos: ', pos)
             loc = kf.iteration(pos.reshape((spatial_dimension, 1)))
             print(loc, '\n')

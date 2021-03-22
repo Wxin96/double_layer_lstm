@@ -23,6 +23,8 @@ def generate_lstm_model(**kwargs) -> Sequential:
     # 个人猜测 recurrent_activation为门激活函数, activation为输入 c~的激活函数
 
     # 一层
+    # recurrent_activation 为 输入门、遗忘门以及输出门的激活函数
+    # activation为单元状态和隐藏状态激活函数
     model.add(
         LSTM(units=hidden_units // 2, activation='tanh',
              recurrent_activation='sigmoid', return_sequences=True,

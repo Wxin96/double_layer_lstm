@@ -21,7 +21,7 @@ class ModelFactory(object):
     @staticmethod
     def product_model(model_type: ModelType, **kwargs):
         return {
+            ModelType.DOUBLE_LSTM_MODEL: generate_lstm_model(**kwargs),
             ModelType.STATEFUL_DOUBLE_LSTM_MODEL: generate_stateful_lstm_model(**kwargs),
-            ModelType.STATEFUL_DOUBLE_LSTM_MODEL_2: generate_stateful_lstm_model_2(**kwargs),
-            ModelType.DOUBLE_LSTM_MODEL: generate_lstm_model(**kwargs)
+            ModelType.STATEFUL_DOUBLE_LSTM_MODEL_2: generate_stateful_lstm_model_2(**kwargs)
         }.get(model_type, None)

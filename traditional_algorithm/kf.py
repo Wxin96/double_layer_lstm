@@ -57,6 +57,13 @@ class KF:
         # print(self.__F)
         pass
 
+    def set_init_position(self, loc):
+        assert loc.shape == (3, ) or loc.shape == (1, 3)
+        self.__x[0, 0] = loc[:, 0]
+        self.__x[1, 0] = loc[:, 1]
+        self.__x[2, 0] = loc[:, 2]
+        pass
+
     def __predict(self):
         """
         状态预测
@@ -102,7 +109,7 @@ class KF:
         """
         迭代，进行扩展卡尔曼滤波。
         Args:
-            location: 系统观测，标签位置。维度-（patial_dimension, 1）
+            location: 系统观测，标签位置。维度-（spatial_dimension, 1）
 
         Returns:
             x，状态估计，标签位置，维度-（spatial_dimension，1）

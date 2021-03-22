@@ -67,6 +67,18 @@ class EKF:
         # print(self.__F)
         pass
 
+    def set_init_position(self, loc):
+        """
+        初始化初始位置，维度-（1,3）or（3，）
+        :param loc: 初始位置，维度-（1,3）or（3，）
+        :return:
+        """
+        assert loc.shape == (3, ) or loc.shape == (1, 3)
+        self.__x[0, 0] = loc[:, 0]
+        self.__x[1, 0] = loc[:, 1]
+        self.__x[2, 0] = loc[:, 2]
+        pass
+
     def __predict(self):
         """
         状态预测
